@@ -1,0 +1,111 @@
+# Tic-Tac-Toe with Minimax (AI is 'X', Human is 'O')
+
+from typing import List, Optional, Tuple
+
+PLAYER, AI = 'O', 'X'
+
+def print_board(b: List[str]) -> None:
+    print()
+    for i in range(0, 9, 3):
+        row = [b[i], b[i+1], b[i+2]]
+        print(" | ".join(c if c != ' ' else str(i+j+1) for j, c in enumerate(row)))
+        if i < 6: print("--+---+--")
+    print()
+
+def winner(b: List[str]) -> Optional[str]:
+    lines = [
+        (0,1,2),(3,4,5),(6,7,8), # rows
+        (0,3,6),(1,4,7),(2,5,8), # cols
+        (0,4,8),(2,4,6) # diags
+    ]
+    for a, c, d in lines:
+        if b[a] != ' ' and b[a] == b[c] == b[d]:
+            return b[a]
+    return None
+
+def full(b: List[str]) -> bool:
+    return all(c != ' ' for c in b)
+
+def score_terminal(b: List[str]) -> Optional[int]:
+    w = winner(b)
+    if w == AI: return 1
+    if w == PLAYER: return -1
+    if full(b): return 0
+    return None # not terminal
+
+def minimax(b: List[str], is_maximizing: bool, alpha: int, beta: int) -> Tuple[int, Optional[int]]:
+    s = score_terminal(b)
+    if s is not None:
+        return s, None
+
+    best_move = None
+    if is_maximizing:
+        best_score = -10
+        for i in range(9):
+            if b[i] == ' ':
+                b[i] = AI
+                val, _ = minimax(b, False, alpha, beta)
+                b[i] = ' '
+                if val > best_score:
+                    best_score, best_move = val, i
+                alpha = max(alpha, best_score)
+                if beta <= alpha:
+                    break
+        return best_score, best_move
+    else:
+        best_score = 10
+        for i in range(9):
+            if b[i] == ' ':
+                b[i] = PLAYER
+                val, _ = minimax(b, True, alpha, beta)
+                b[i] = ' '
+                if val < best_score:
+                    best_score, best_move = val, i
+                beta = min(beta, best_score)
+                if beta <= alpha:
+                    break
+        return best_score, best_move
+
+def ai_move(b: List[str]) -> int:
+    # If first move, pick center if free for speed
+    if b[4] == ' ':
+        return 4
+    _, move = minimax(b, True, -10, 10)
+    return move if move is not None else next(i for i,c in enumerate(b) if c==' ')
+
+def human_move(b: List[str]) -> int:
+    while True:
+        try:
+            pos = int(input("Your move (1-9): ")) - 1
+            if 0 <= pos < 9 and b[pos] == ' ':
+                return pos
+        except ValueError:
+            pass
+        print("Invalid move. Try again.")
+
+def main():
+    board = [' '] * 9
+    print("You are O, AI is X. AI goes first.")
+    print_board(board)
+
+    turn = 'X' # AI first; set to 'O' if you want human to start
+    while True:
+        if turn == AI:
+            move = ai_move(board)
+            board[move] = AI
+            print("AI moves to", move+1)
+        else:
+            move = human_move(board)
+            board[move] = PLAYER
+
+        print_board(board)
+        w = winner(board)
+        if w or full(board):
+            if w == AI: print("AI wins!")
+            elif w == PLAYER: print("You win!")
+            else: print("It's a draw.")
+            break
+        turn = PLAYER if turn == AI else AI
+
+if __name__ == "__main__":
+    main()
