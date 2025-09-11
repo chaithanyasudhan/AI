@@ -1,0 +1,73 @@
+from collections import deque
+
+# Goal state
+GOAL = (1, 2, 3,
+        4, 5, 6,
+        7, 8, 0)
+
+# Moves: up, down, left, right
+MOVES = {
+    'U': -3,
+    'D':  3,
+    'L': -1,
+    'R':  1
+}
+
+def is_valid_move(pos, move):
+    """Check if blank can move in given direction."""
+    if move == 'U' and pos < 3: return False
+    if move == 'D' and pos > 5: return False
+    if move == 'L' and pos % 3 == 0: return False
+    if move == 'R' and pos % 3 == 2: return False
+    return True
+
+def neighbors(state):
+    """Generate valid neighbor states from current state."""
+    new_states = []
+    pos = state.index(0)  # blank position
+    for move, offset in MOVES.items():
+        if is_valid_move(pos, move):
+            new_pos = pos + offset
+            new_state = list(state)
+            new_state[pos], new_state[new_pos] = new_state[new_pos], new_state[pos]
+            new_states.append((tuple(new_state), move))
+    return new_states
+
+def dls(state, depth, visited, path):
+    """Depth-limited DFS."""
+    if state == GOAL:
+        return path
+    if depth == 0:
+        return None
+    visited.add(state)
+
+    for neighbor, move in neighbors(state):
+        if neighbor not in visited:
+            result = dls(neighbor, depth - 1, visited, path + [move])
+            if result is not None:
+                return result
+    return None
+
+def iddfs(start, max_depth=50):
+    """Iterative Deepening DFS."""
+    for depth in range(max_depth):
+        visited = set()
+        path = dls(start, depth, visited, [])
+        if path is not None:
+            return path
+    return None
+
+# --- MAIN PROGRAM ---
+if __name__ == "__main__":
+    print("Enter the start state of the 8-puzzle (use 0 for blank):")
+    nums = []
+    for i in range(9):
+        nums.append(int(input(f"Tile {i+1}: ")))
+    start = tuple(nums)
+
+    solution = iddfs(start, max_depth=30)
+    if solution:
+        print(f"\nSolution found in {len(solution)} moves:")
+        print(" -> ".join(solution))
+    else:
+        print("No solution found within depth limit.")
