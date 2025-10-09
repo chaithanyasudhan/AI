@@ -1,0 +1,86 @@
+import random
+import math
+
+def calculate_attacks(board):
+    """Calculates the number of attacking queen pairs on the board."""
+    n = len(board)
+    attacks = 0
+    for i in range(n):
+        for j in range(i + 1, n):
+            # Check horizontal attacks
+            if board[i] == board[j]:
+                attacks += 1
+            # Check diagonal attacks
+            if abs(board[i] - board[j]) == abs(i - j):
+                attacks += 1
+    return attacks
+
+def get_neighbor(board):
+    """Generates a neighboring state by randomly moving one queen."""
+    n = len(board)
+    new_board = list(board)
+    queen_to_move = random.randint(0, n - 1)
+    new_position = random.randint(0, n - 1)
+    new_board[queen_to_move] = new_position
+    return tuple(new_board)
+
+def simulated_annealing(n, initial_temperature, cooling_rate, iterations):
+    """Solves the N-Queens problem using Simulated Annealing."""
+    current_board = tuple(random.randint(0, n - 1) for _ in range(n))
+    current_energy = calculate_attacks(current_board)
+    best_board = current_board
+    best_energy = current_energy
+    temperature = initial_temperature
+
+    for i in range(iterations):
+        if temperature <= 0:
+            break
+
+        neighbor_board = get_neighbor(current_board)
+        neighbor_energy = calculate_attacks(neighbor_board)
+
+        # If neighbor is better, accept it
+        if neighbor_energy < current_energy:
+            current_board = neighbor_board
+            current_energy = neighbor_energy
+            if current_energy < best_energy:
+                best_energy = current_energy
+                best_board = current_board
+        # If neighbor is worse, accept with a probability
+        else:
+            probability = math.exp((current_energy - neighbor_energy) / temperature)
+            if random.random() < probability:
+                current_board = neighbor_board
+                current_energy = neighbor_energy
+
+        temperature *= cooling_rate
+
+        if current_energy == 0:  # Found a solution
+            break
+
+    return best_board, best_energy
+
+def print_board(board):
+    """Prints the N-Queens board."""
+    n = len(board)
+    for row in range(n):
+        line = ["Q" if board[col] == row else "." for col in range(n)]
+        print(" ".join(line))
+
+if __name__ == "__main__":
+    N = 4  # For the 4-Queens problem
+    initial_temp = 100
+    cooling_rate = 0.99
+    num_iterations = 10000
+
+    solution_board, solution_attacks = simulated_annealing(N, initial_temp, cooling_rate, num_iterations)
+
+    print(f"Final board configuration: {solution_board}")
+    print(f"Number of attacks: {solution_attacks}")
+
+    if solution_attacks == 0:
+        print("\nSolution found:")
+        print_board(solution_board)
+    else:
+        print("\nNo perfect solution found within iterations. Best found:")
+        print_board(solution_board)
