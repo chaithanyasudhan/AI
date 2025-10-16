@@ -1,0 +1,41 @@
+import pandas as pd
+import itertools
+
+# Propositions
+props = ['A', 'B', 'C']
+
+# Generate all truth assignments for A, B, C
+truth_values = list(itertools.product([False, True], repeat=3))
+
+def implies(a, b):
+    return (not a) or b
+
+rows = []
+for (A, B, C) in truth_values:
+    alpha = A or B                    # α = A ∨ B
+    KB = (A or C) and (B or (not C)) # KB = (A ∨ C) ∧ (B ∨ ¬C)
+
+    rows.append({
+        'A': A, 'B': B, 'C': C,
+        'α = A∨B': alpha,
+        'KB = (A∨C)∧(B∨¬C)': KB
+    })
+
+# Create DataFrame
+df = pd.DataFrame(rows)
+
+# Filter models where KB is true
+models_where_KB_true = df[df['KB = (A∨C)∧(B∨¬C)']]
+
+# Print full truth table
+print("Full Truth Table:\n")
+print(df.to_string(index=False))
+
+# Check if KB entails α
+# KB entails α if α is true in every model where KB is true
+entails_alpha = models_where_KB_true['α = A∨B'].all()
+
+print("\nModels where KB is True:")
+print(models_where_KB_true.to_string(index=False))
+
+print(f"\nDoes KB entail α (A∨B)? {'Yes' if entails_alpha else 'No'}")
