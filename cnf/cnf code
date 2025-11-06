@@ -1,0 +1,76 @@
+import re
+
+# -------------------------
+# Helper functions
+# -------------------------
+
+def eliminate_implications(expr):
+    """Eliminate implications (A -> B becomes ~A | B)."""
+    expr = re.sub(r'\((.*?)\)->\((.*?)\)', r'(~(\1)|(\2))', expr)
+    return expr
+
+def move_not_inwards(expr):
+    """Apply De Morgan's laws and double negation elimination."""
+    expr = expr.replace("~~", "")
+    expr = expr.replace("~(A&B)", "(~A|~B)")
+    expr = expr.replace("~(A|B)", "(~A&~B)")
+    return expr
+
+def standardize_variables(expr):
+    """Rename variables to avoid clashes."""
+    # For demo, just ensure lowercase vars get unique suffixes
+    var_map = {}
+    count = 0
+    new_expr = ""
+    for ch in expr:
+        if ch.islower() and ch.isalpha():
+            if ch not in var_map:
+                var_map[ch] = chr(ord('a') + count)
+                count += 1
+            new_expr += var_map[ch]
+        else:
+            new_expr += ch
+    return new_expr
+
+def skolemize(expr):
+    """Replace existential quantifiers with Skolem constants/functions."""
+    expr = re.sub(r'∃[a-z]\.', '', expr)  # Remove existential quantifier
+    return expr.replace("x", "c")  # Replace var with Skolem constant (simple demo)
+
+def drop_universal(expr):
+    """Remove universal quantifiers (implicit in CNF)."""
+    expr = re.sub(r'∀[a-z]\.', '', expr)
+    return expr
+
+def distribute_or_over_and(expr):
+    """Simplified distribution (only handles basic patterns)."""
+    # In a full implementation you'd need a tree structure, not regex.
+    return expr.replace("|", "∨").replace("&", "∧")
+
+# -------------------------
+# Main CNF conversion function
+# -------------------------
+
+def fol_to_cnf(expr):
+    print("Original:", expr)
+    expr = eliminate_implications(expr)
+    print("→ No implications:", expr)
+    expr = move_not_inwards(expr)
+    print("→ Negations inward:", expr)
+    expr = standardize_variables(expr)
+    print("→ Standardized vars:", expr)
+    expr = skolemize(expr)
+    print("→ Skolemized:", expr)
+    expr = drop_universal(expr)
+    print("→ Dropped universals:", expr)
+    expr = distribute_or_over_and(expr)
+    print("→ CNF form:", expr)
+    return expr
+
+# -------------------------
+# Example usage
+# -------------------------
+
+formula = "∀x.(P(x) -> ∃y.(Q(y) & R(x,y)))"
+cnf = fol_to_cnf(formula)
+print("\nFinal CNF:", cnf)
